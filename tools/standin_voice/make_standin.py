@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 SRC = os.path.join(ROOT, 'source')
 FF = os.environ.get('FFMPEG') or glob.glob(os.path.join(ROOT, '.venv/lib/python*/site-packages/imageio_ffmpeg/binaries/ffmpeg*'))[0]
 TARGETS = [('english', 'english 5 year old.txt', list(range(16, 40))),
-           ('science', 'science 5 year old.txt', [38, 39, 40, 45, 46, 47, 48, 49, 50])]
+           ('science', 'science 5 year old.txt', list(range(16, 27)) + [38, 39, 40, 45, 46, 47, 48, 49, 50])]
 # how the phonics marks are said (a voice engine reads "/d/" as "slash d slash")
 SOUNDS = {'ig': 'ig', 'ed': 'ed', 'ing': 'ing', 'oat': 'oat', 'd': 'duh', 'o': 'ah', 'g': 'guh', 's': 'sss', 'u': 'uh',
           'n': 'nnn', 'ks': 'ks', 'b': 'buh', 'm': 'mmm', 'r': 'rrr', 'kahh': 'kah', 'sss': 'sss', 'mmm': 'mmm'}

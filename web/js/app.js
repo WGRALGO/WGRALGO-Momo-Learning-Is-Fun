@@ -8,7 +8,7 @@
 // Questions come from js/content.js (built by tools/build_content.py). Works the same on Android (WebView), Linux and the web.
 (function () {
   'use strict';
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
   var C = window.MOMO_CONTENT || { levels: [], characters: [] };
   var $ = function (id) { return document.getElementById(id); };
   var TEST = { fast: false };              // tests: media "plays" for a moment instead of its full length

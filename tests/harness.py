@@ -174,8 +174,8 @@ class Page:
 
 
 # what the content holds now (update when questions are added: tools/build_content.py prints the counts)
-EXPECT = {'easy': 8, 'hard': {'words': 50, 'math': 25, 'science': 26}}
-STANDIN = 33          # questions with the stand-in voice (credits line)
+EXPECT = {'easy': 8, 'hard': {'words': 50, 'math': 25, 'science': 37}}
+STANDIN = 44          # questions with the stand-in voice (credits line)
 HARD_ALL = sum(EXPECT['hard'].values())
 
 SCREEN_PARTS = {

@@ -10,7 +10,7 @@
 #   ./build.sh --test      a debuggable APK for the emulator checks: build-test/test.apk (never dist/)
 set -euo pipefail
 cd "$(dirname "$0")"
-ROOT=$PWD VER=1.0.0 CODE=1
+ROOT=$PWD VER=1.1.0 CODE=2
 TOOLS=${UPTOP_TOOLS:-$HOME/.local/share/uptop-build}
 export JAVA_HOME=$TOOLS/jdk PATH=$TOOLS/jdk/bin:$PATH
 BT=$TOOLS/sdk/build-tools/34.0.0 JAR=$TOOLS/sdk/platforms/android-34/android.jar
