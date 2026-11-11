@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <!-- Before Android 12 the launch window itself shows the logo big on purple. -->
+        <item name="android:windowBackground">@drawable/launch_bg</item>
+        <item name="android:colorBackground">@color/purple</item>
+        <item name="android:statusBarColor">@color/purple</item>
+        <item name="android:navigationBarColor">@color/purple</item>
+        <item name="android:colorAccent">@color/gold</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

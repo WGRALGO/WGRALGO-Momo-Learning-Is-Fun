@@ -1,0 +1,123 @@
+"""Makes the GitHub copy of the public Momo app: the CODE ONLY (owner, 2026-11-10: "code + apk release, no content,
+never content"). Left out on purpose: source/ (pictures, voices, videos, quiz scripts), web/q, web/media, web/img,
+web/fonts, web/js/content.js (question wording), web/js/voice-env.js (made from the voices), the app icons and splash
+art (made from the logo), keystore/, dist/, build/, docs/. Every file is scanned for anything private before it goes.
+Usage: .venv/bin/python -I tools/github_export.py OUT      → OUT/ (must not exist)"""
+import os, re, shutil, sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FILES = ['build.sh', 'android/AndroidManifest.xml', 'linux/momo-learning', 'linux/momo-learning.desktop',
+         'web/index.html', 'web/css/app.css', 'web/js/app.js', 'web/js/momo-light.js',
+         'tools/build_content.py', 'tools/make_assets.py', 'tools/make_intro.py', 'tools/make_web.py', 'tools/verify_audio.py',
+         'tools/cutout_logo.py', 'tools/clean_badge.py', 'tools/content_map.json', 'tools/picture_spots.json',
+         'tools/github_export.py', 'tools/intro/intro.html', 'tools/intro/render.js', 'tools/momo_light/make_preview.py',
+         'tools/standin_voice/xtts_samples.py', 'tools/standin_voice/kokoro_samples.py', 'tools/standin_voice/make_page.py',
+         'tests/harness.py', 'tests/run-all.sh', 'tests/ui-shots.js', 'tests/android/check.js', 'tests/android/setup.sh',
+         'tests/android/teardown.sh', 'tests/web/serve.js', 'tests/web/check.js']
+DIRS = ['android/src', 'android/res/values', 'android/res/values-v31', 'android/res/values-sw400dp', 'android/res/values-sw600dp',
+        'android/res/values-sw720dp', 'android/res/values-sw800dp']
+EXTRA = ['tools/standin_voice/make_standin.py', 'tools/github_publish.py']          # added when it exists
+PRIVATE = [r'/home/', r'noneya', r'@gmail', r'vuglylife', r'storePassword\s*=\s*[A-Za-z0-9]{6,}', r'keyPassword\s*=\s*[A-Za-z0-9]{6,}', r'BEGIN (RSA |EC )?PRIVATE KEY',
+           r'gh[pousr]_[A-Za-z0-9]{20,}', r'sk-[A-Za-z0-9]{20,}']
+
+README = '''# The Momma Lewis Momo Learning Is FUN
+
+**A free learning game for children ages 2 to 7.** Momo reads every question aloud while her purple heart glows with
+her words. The child picks one of 8 characters and a level, then answers by tapping A, B or C, or the answer drawn in
+the picture. The character cheers or tries again, and Momo explains the answer.
+
+- **Ages 2–7.** Four levels: Easy, Normal, Hard and Expert, each marked with rising bars. Normal and Expert are coming soon.
+- **Words, math and science**, in order or mixed up. A missed question comes back once at the end of the round.
+- **8 characters**: a dove, an elephant, a dog, a sphinx, a cane, an ivy leaf, a duck and a lion, each with its own
+  "right" and "try again" videos.
+- **The child's name** can be typed (or skipped). It is shown on screen only and is never saved or sent anywhere.
+- **Works offline.** No ads, no accounts, no tracking, no internet permission.
+
+## Download
+
+The Android app (Android 7 or newer, phones and tablets) is in [Releases](../../releases): `WGRALGO-Momo-Learning-Is-Fun-<version>.apk`.
+
+## What is in this repository
+
+**The code only.** The pictures, Momo's voice, the characters' videos, the logo and the question wording are **not**
+included and are not licensed for any use. This repository cannot build the app without them.
+
+| Folder | What |
+| --- | --- |
+| `web/` | The app itself (HTML, CSS, JavaScript): the same page runs on Android, Linux and the web |
+| `web/js/momo-light.js` | Momo's heart: a canvas light that pulses with every syllable (loudness measured ahead of time) |
+| `android/` | The Android shell: a full-screen WebView that serves the app from inside the APK, with byte ranges for media |
+| `linux/` | The Linux desktop shell (GTK 3 + WebKit2GTK 4.1) |
+| `tools/` | Build scripts: questions, assets, the intro video, the web folder |
+| `tests/` | UI tests (WebKitGTK at 9 screen sizes, real playback), Android emulator checks, web folder checks |
+
+## Credits
+
+- **Built by** Claude Code Opus 5.5
+- **Content created by** Gemini Plus Flash 3.6, Canva Pro, Grok Premium Expert 4.7, ChatGPT-6, and ElevenLabs Multilingual v2
+{STANDIN}- **Font:** Fredoka (SIL Open Font License 1.1), not included here
+
+## License
+
+Copyright © 2026 The Wealth Gap Resolution Algorithm™ Inc. **All rights reserved.** See [LICENSE](LICENSE).
+'''
+LICENSE = '''Copyright (c) 2026 The Wealth Gap Resolution Algorithm Inc. All rights reserved.
+
+This repository is published so that people can read the code of "The Momma Lewis Momo Learning Is FUN".
+No license is granted. You may not copy, modify, distribute, sublicense or sell this code or any part of it, or use
+it in another product, without written permission from the copyright holder.
+
+The app's pictures, voices, videos, logo and question wording are not part of this repository and are not licensed
+for any use.
+
+The Android app itself may be downloaded from this repository's Releases and used free of charge.
+'''
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit(__doc__)
+    out = os.path.abspath(sys.argv[1])
+    if os.path.exists(out):
+        sys.exit(out + ' exists')
+    files = list(FILES) + [f for f in EXTRA if os.path.exists(os.path.join(ROOT, f))]
+    for d in DIRS:
+        for dp, _, fs in os.walk(os.path.join(ROOT, d)):
+            files += [os.path.relpath(os.path.join(dp, f), ROOT) for f in fs if not f.endswith(('.pyc',)) and '.bak' not in f]
+    bad = []
+    # the signing key's real password must appear nowhere (looked up from keystore/, never printed)
+    secrets = []
+    kp = os.path.join(ROOT, 'keystore', 'keystore.properties')
+    if os.path.exists(kp):
+        secrets = [l.split('=', 1)[1].strip() for l in open(kp) if 'Password=' in l]
+    for rel in sorted(set(files)):
+        src = os.path.join(ROOT, rel)
+        text = open(src, encoding='utf-8').read()
+        for pat in PRIVATE:
+            for m in re.finditer(pat, text):
+                line = text.count('\n', 0, m.start()) + 1
+                # the scan's own list of patterns is not a leak
+                if rel == 'tools/github_export.py':
+                    continue
+                bad.append('%s:%d matches %s' % (rel, line, pat))
+        if any(x and x in text for x in secrets):
+            bad.append('%s contains the signing key password' % rel)
+        dst = os.path.join(out, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(src, dst)
+    import json
+    standin = ''
+    cm = json.load(open(os.path.join(ROOT, 'tools', 'content_map.json')))
+    if cm.get('standin_voice'):
+        standin = '- **Stand-in voice** (some of the newest questions, until Momo records them): %s\n' % cm['standin_voice']
+    open(os.path.join(out, 'README.md'), 'w').write(README.replace('{STANDIN}', standin))
+    open(os.path.join(out, 'LICENSE'), 'w').write(LICENSE)
+    print('%d files in %s' % (len(set(files)) + 2, out))
+    if bad:
+        print('PRIVATE DATA FOUND, do not publish:\n  ' + '\n  '.join(bad)); return 1
+    print('scan: nothing private')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

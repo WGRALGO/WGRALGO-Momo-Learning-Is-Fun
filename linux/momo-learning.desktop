@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=The Momma Lewis Momo Learning Is FUN
+GenericName=Learning Game for Ages 2-7
+Comment=Momo's learning quizzes for ages 2-7: words, math and science
+Exec=momo-learning
+Icon=momo-learning
+Terminal=false
+Categories=Education;
+Keywords=momo;kids;quiz;learning;math;science;words;
+StartupWMClass=com.wgra.momolearning

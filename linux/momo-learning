@@ -1,0 +1,142 @@
+#!/usr/bin/python3
+"""The Momma Lewis Momo Learning Is FUN (public app, ages 2-7): desktop app (GTK 3 + WebKit2GTK 4.1).
+
+Shows the same app as the Android version (web/), straight from the installed files. Nothing goes on the internet.
+The window can be any shape: drag it tall and thin for a phone, wide for a tablet. F11: full screen. Esc: back.
+
+    momo-learning              open the app
+    momo-learning --selftest   quick self-check (files, questions, GTK/WebKit)
+    momo-learning --version
+"""
+import json
+import os
+import re
+import sys
+
+APP_ID = 'com.wgra.momolearning'
+VERSION = '1.0.0'
+NAME = 'The Momma Lewis Momo Learning Is FUN'
+WEB_DIR = os.environ.get('MOMO_WEB_DIR', '/usr/share/momo-learning/web')
+PURPLE = '#542282'
+
+
+def content(web_dir=WEB_DIR):
+    """The questions from js/content.js."""
+    with open(os.path.join(web_dir, 'js', 'content.js'), encoding='utf-8') as f:
+        text = f.read()
+    m = re.search(r'window\.MOMO_CONTENT\s*=\s*(\{.*\})\s*;\s*$', text, re.S)
+    return json.loads(m.group(1))
+
+
+def selftest(web_dir=WEB_DIR):
+    need = ['index.html', 'css/app.css', 'js/app.js', 'js/content.js', 'js/voice-env.js', 'js/momo-light.js', 'img/badge.webp',
+            'img/intro-poster.jpg', 'media/intro.mp4', 'fonts/Fredoka.ttf']
+    missing = [p for p in need if not os.path.isfile(os.path.join(web_dir, p))]
+    c = content(web_dir)
+    for ch in c['characters']:
+        for k in ('image', 'correctVideo', 'wrongVideo'):
+            if not os.path.isfile(os.path.join(web_dir, ch[k])):
+                missing.append(ch[k])
+    if len(c['characters']) != 8:
+        missing.append('8 characters (found %d)' % len(c['characters']))
+    n = 0
+    for lv in c['levels']:
+            for s in lv['sets']:
+                for q in s['questions']:
+                    n += 1
+                    for k in ('pic', 'ask', 'right', 'wrong'):
+                        if not os.path.isfile(os.path.join(web_dir, q[k])):
+                            missing.append(q[k])
+                    if q['answer'] not in 'ABC'[:len(q['options'])]:
+                        missing.append('%s: answer %s' % (q['id'], q['answer']))
+    import gi
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('WebKit2', '4.1')
+    from gi.repository import WebKit2  # noqa: F401
+    if missing:
+        print('selftest FAIL: ' + ', '.join(missing))
+        return 1
+    print('selftest OK: %s %s, %d questions' % (NAME, VERSION, n))
+    return 0
+
+
+def setup_view(WebKit2, view):
+    s = view.get_settings()
+    s.set_enable_javascript(True)
+    s.set_enable_media(True)
+    s.set_media_playback_requires_user_gesture(False)
+    s.set_media_playback_allows_inline(True)
+    s.set_allow_file_access_from_file_urls(True)
+    s.set_enable_developer_extras(bool(os.environ.get('MOMO_DEVTOOLS')))
+    s.set_enable_back_forward_navigation_gestures(False)
+    s.set_javascript_can_open_windows_automatically(False)
+
+
+def make_view(WebKit2):
+    policies = WebKit2.WebsitePolicies(autoplay=WebKit2.AutoplayPolicy.ALLOW)
+    view = WebKit2.WebView(website_policies=policies)
+    setup_view(WebKit2, view)
+    return view
+
+
+def main():
+    import gi
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('Gdk', '3.0')
+    gi.require_version('WebKit2', '4.1')
+    from gi.repository import Gdk, GLib, Gtk, WebKit2
+
+    GLib.set_prgname(APP_ID)
+    GLib.set_application_name(NAME)
+    win = Gtk.Window(title=NAME)
+    win.set_wmclass(APP_ID, NAME)
+    win.set_icon_name('momo-learning')
+    win.set_default_size(1280, 800)
+    geo = Gdk.Geometry(); geo.min_width, geo.min_height = 320, 320
+    win.set_geometry_hints(None, geo, Gdk.WindowHints.MIN_SIZE)
+    view = make_view(WebKit2)
+    bg = Gdk.RGBA(); bg.parse(PURPLE)
+    view.set_background_color(bg)
+
+    def on_policy(v, decision, kind):
+        # stay inside the app: no new windows, no pages from anywhere else
+        if kind == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+            uri = decision.get_navigation_action().get_request().get_uri()
+            if not uri.startswith('file://' + os.path.realpath(WEB_DIR)):
+                decision.ignore(); return True
+        if kind == WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION:
+            decision.ignore(); return True
+        return False
+    view.connect('decide-policy', on_policy)
+    view.connect('context-menu', lambda *a: True)
+
+    full = {'on': False}
+
+    def on_key(w, ev):
+        if ev.keyval == Gdk.KEY_F11:
+            (win.unfullscreen if full['on'] else win.fullscreen)()
+            return True
+        return False
+
+    def on_state(w, ev):
+        full['on'] = bool(ev.new_window_state & Gdk.WindowState.FULLSCREEN)
+        if ev.changed_mask & Gdk.WindowState.ICONIFIED:
+            fn = '__momoPause' if ev.new_window_state & Gdk.WindowState.ICONIFIED else '__momoResume'
+            view.evaluate_javascript('window.%s && window.%s()' % (fn, fn), -1, None, None, None, None, None)
+        return False
+    win.connect('key-press-event', on_key)
+    win.connect('window-state-event', on_state)
+    win.connect('destroy', Gtk.main_quit)
+    win.add(view)
+    view.load_uri('file://' + os.path.join(os.path.realpath(WEB_DIR), 'index.html'))
+    win.show_all()
+    Gtk.main()
+
+
+if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print(VERSION)
+    elif '--selftest' in sys.argv:
+        sys.exit(selftest())
+    else:
+        main()

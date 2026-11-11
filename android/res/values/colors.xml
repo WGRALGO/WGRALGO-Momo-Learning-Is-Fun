@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the logo's deep purple, gold, berry red -->
+    <color name="purple">#FF542282</color>
+    <color name="gold">#FFF7B733</color>
+    <color name="berry">#FFD81E5B</color>
+</resources>

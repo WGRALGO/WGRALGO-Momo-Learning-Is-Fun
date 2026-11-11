@@ -1,0 +1,32 @@
+{
+  "_about": "The public app (ages 2-7). Which question folders in source/ go into which level. A folder is '<prefix> <number>' (e.g. 'math 4'): one picture (.jpg/.png) and three voice clips ending in a.mp3 (question), b.mp3 (correct), c.mp3 (wrong). The folder number is the question's # in the quiz .md file and in the set's recording script (the owner's .txt: its wording, choices and answer win over the .md table) unless the set's numbers map says otherwise, e.g. numbers {3: 11} = folder 'science 3' is quiz question #11. A folder holding 'standin.txt' has stand-in voice clips (tools/standin_voice), shown as such in the credits until Momo's own clips replace them. Every level: a missed question comes back once at the end of the round. Run: .venv/bin/python -I tools/build_content.py",
+  "standin_voice": "Kokoro-82M (voice am_michael, Apache-2.0)",
+  "levels": [
+    {"id": "easy", "label": "Easy", "bars": 1, "sets": [
+      {"id": "toddler", "title": "Toddler Pack", "icon": "abc", "quiz": "Momo's Toddler Pack 50 Questions for 2-Year-Olds.md", "script": "2 year old.txt", "folder_prefix": "two", "numbers": {"5": 50, "6": 49, "7": 48, "8": 47}}
+    ]},
+    {"id": "normal", "label": "Normal", "bars": 2, "sets": [
+      {"id": "preschool", "title": "Preschool Pack", "icon": "abc", "quiz": "Momo's Preschool Pack 50 Questions for 3-Year-Olds.md", "folder_prefix": "preschool"}
+    ]},
+    {"id": "hard", "label": "Hard", "bars": 3, "sets": [
+      {"id": "words", "title": "Words", "icon": "abc", "quiz": "Momo's Words Quiz 50 Grammar & Spelling Questions.md", "script": "english 5 year old.txt", "folder_prefix": "english"},
+      {"id": "math", "title": "Math", "icon": "123", "quiz": "Momo's Math Quiz 50 Questions.md", "script": "math 5 year old.txt", "folder_prefix": "math"},
+      {"id": "science", "title": "Science", "icon": "leaf", "quiz": "Momo's Science Quiz 50 Questions (Revised).md", "script": "science 5 year old.txt", "folder_prefix": "science", "numbers": {"3": 11, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7, "9": 8, "10": 9, "11": 10}}
+    ]},
+    {"id": "expert", "label": "Expert", "bars": 4, "sets": [
+      {"id": "words", "title": "Words", "icon": "abc", "quiz": "Momo's Words Quiz, Level 2 50 Grammar & Spelling Questions for 7-Year-Olds.md", "folder_prefix": "english level 2"},
+      {"id": "math", "title": "Math", "icon": "123", "quiz": "Momo's Math Quiz, Level 2 50 Questions for 7-Year-Olds.md", "folder_prefix": "math level 2"},
+      {"id": "science", "title": "Science", "icon": "leaf", "quiz": "Momo's Science Quiz, Level 2 50 Questions for 7-Year-Olds.md", "folder_prefix": "science level 2"}
+    ]}
+  ],
+  "characters": [
+    {"id": "dove",     "alt": "the blue and white dove",       "folder": "Royal Blue and Pure White cartoon female dove (final)", "picture": "Royal Blue and Pure White cartoon female dove.png", "fx": 0.5},
+    {"id": "elephant", "alt": "the crimson and cream elephant", "folder": "Crimson and Cream cartoon female elephant (Final)", "picture": "Crimson and Cream cartoon female elephant.jpg", "fx": 0.5},
+    {"id": "dog",      "alt": "the purple and gold dog",       "folder": "Royal Purple and Old Gold cartoon male dog (final)", "picture": "Royal Purple and Old Gold cartoon male dog.jpg", "fx": 0.24},
+    {"id": "sphinx",   "alt": "the black and gold sphinx",     "folder": "Black and Old Gold cartoon male Great Sphinx of Giza (Final)", "picture": "Black and Old Gold cartoon male Great Sphinx of Giza.jpg", "fx": 0.5},
+    {"id": "cane",     "alt": "the crimson and cream cane",    "folder": "Crimson and Cream cartoon male cane (Final)", "picture": "Crimson and Cream cartoon male cane.jpg", "fx": 0.5},
+    {"id": "ivy",      "alt": "the pink and green ivy leaf",   "folder": "Salmon Pink and Apple Green cartoon female Ivy Leaf (Final)", "picture": "Salmon Pink and Apple Green cartoon female Ivy Leaf.jpg", "fx": 0.5},
+    {"id": "duck",     "alt": "the sparkly pink duck",         "folder": "Sparkly pink cartoon female duck (Final)", "picture": "Sparkly pink duck.jpg", "fx": 0.5},
+    {"id": "lion",     "alt": "the black, red and silver lion", "folder": "Black, red, and silver cartoon male lion (Final)", "picture": "Black, red, and silver cartoon male lion.jpg", "fx": 0.5}
+  ]
+}

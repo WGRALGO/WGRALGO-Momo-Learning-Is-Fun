@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- under the icon (the full name doesn't fit there) -->
+    <string name="app_name">Momo Learning</string>
+    <!-- Settings → Apps and everywhere else -->
+    <string name="app_full_name">The Momma Lewis Momo Learning Is FUN</string>
+</resources>

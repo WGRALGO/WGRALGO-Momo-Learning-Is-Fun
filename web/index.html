@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#542282">
+<meta name="description" content="The Momma Lewis Momo Learning Is FUN: Momo's learning game for ages 2-7. Words, math and science quizzes read aloud. No ads, no accounts, no tracking.">
+<title>The Momma Lewis Momo Learning Is FUN</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.5 4.5 8 12l7.5 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12.5 5v14l-5-4.5H4z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.3 5.8a9 9 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.4" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M5.5 12a6.5 6.5 0 1 0 2-4.7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M4.5 3.8v5h5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5l7 7-7 7M12.5 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3.5 7h3.2c2 0 3.2.9 4.3 2.6l2 3c1.1 1.7 2.3 2.6 4.3 2.6h3.2M3.5 17h3.2c1.6 0 2.7-.6 3.6-1.7M13.4 8.7c.9-1.1 2-1.7 3.6-1.7h3.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M17.6 4.2 20.5 7l-2.9 2.8M17.6 14.4l2.9 2.8-2.9 2.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 10.8v6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.6" fill="currentColor"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="4.2" fill="currentColor"/><path d="M4 20.5c.8-4.2 4-6.6 8-6.6s7.2 2.4 8 6.6z" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-abc" viewBox="0 0 48 48"><text x="24" y="33" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="currentColor">ABC</text></symbol>
+  <symbol id="i-123" viewBox="0 0 48 48"><text x="24" y="33" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="currentColor">123</text></symbol>
+  <symbol id="i-leaf" viewBox="0 0 48 48"><path d="M10 38c0-16 10-27 29-28 0 19-11 29-27 29" fill="currentColor"/><path d="M12 37c6-9 12-15 20-19" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-mix" viewBox="0 0 48 48"><path d="M24 7l4.3 9 9.9 1.3-7.2 6.8 1.8 9.8L24 29.1l-8.8 4.8 1.8-9.8-7.2-6.8 9.9-1.3z" fill="currentColor"/><circle cx="9" cy="38" r="3.4" fill="currentColor"/><circle cx="39" cy="38" r="3.4" fill="currentColor"/><circle cx="24" cy="41" r="2.6" fill="currentColor"/></symbol>
+</svg>
+
+<main id="app">
+  <!-- 1. the logo (no "made by" line: owner, 2026-11-10) -->
+  <section id="splash" class="screen show" aria-label="The Momma Lewis Momo Learning Is FUN">
+    <div class="splash-in">
+      <img class="splash-badge" src="img/badge.webp" alt="The Momma Lewis Momo Learning Is FUN">
+    </div>
+  </section>
+
+  <!-- 2. Momo's intro (her heart and the 8 characters), then "choose your character": the 8 pictures -->
+  <section id="home" class="screen" aria-label="Home">
+    <header class="home-top">
+      <span class="ages" id="ages">For ages 2&ndash;7</span>
+      <button class="small-pill" id="creditsBtn" aria-label="Credits"><svg><use href="#i-info"/></svg><span>Credits</span></button>
+    </header>
+    <div class="home-wrap" id="homeWrap">
+      <div class="intro card" id="introCard">
+        <video id="intro" playsinline preload="auto" poster="img/intro-poster.jpg" src="media/intro.mp4"></video>
+        <button class="vid-btn" id="introBtn" aria-label="Play Momo's hello"><svg><use href="#i-play"/></svg></button>
+      </div>
+      <div class="friends" id="friends"></div>
+    </div>
+  </section>
+
+  <!-- 3. the level: Easy, Normal, Hard, Expert, each with its bars -->
+  <section id="mode" class="screen" aria-label="Pick a level">
+    <header class="bar"><button class="round back" aria-label="Back"><svg><use href="#i-back"/></svg></button><h1 class="bar-title" id="modeTitle"><span class="t-long">Pick a level</span><span class="t-short">Level</span></h1><button class="mix" aria-pressed="false" aria-label="Mix up the questions"><svg><use href="#i-shuffle"/></svg><span class="mix-label">Mix up</span><span class="knob"></span></button></header>
+    <div class="mode-body">
+      <div class="hero card"><img id="modeHero" alt=""></div>
+      <div class="mode-btns" id="modeBtns"></div>
+    </div>
+  </section>
+
+  <!-- 4. the child's name (optional, never kept: asked fresh each time) -->
+  <section id="name" class="screen" aria-label="Your name">
+    <header class="bar"><button class="round back" aria-label="Back"><svg><use href="#i-back"/></svg></button><h1 class="bar-title"><span class="t-long">What's your name?</span><span class="t-short">Your name</span></h1><span class="bar-gap"></span></header>
+    <form class="name-body" id="nameForm" autocomplete="off">
+      <div class="name-hero card"><img id="nameHero" alt=""></div>
+      <div class="name-col">
+        <label class="name-label" for="nameInput">Type your name, or skip</label>
+        <input id="nameInput" class="name-input" type="text" maxlength="20" inputmode="text" autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="Your name" aria-label="Your name">
+        <div class="name-btns">
+          <button type="submit" class="pill gold" id="nameGo"><svg><use href="#i-play"/></svg><span>Let's go!</span></button>
+          <button type="button" class="pill violet" id="nameSkip"><span>Skip</span><svg><use href="#i-next"/></svg></button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- 5. which subject (when a level has more than one) -->
+  <section id="subjects" class="screen" aria-label="Pick a subject">
+    <header class="bar"><button class="round back" aria-label="Back"><svg><use href="#i-back"/></svg></button><h1 class="bar-title" id="subjTitle"></h1><button class="mix" aria-pressed="false" aria-label="Mix up the questions"><svg><use href="#i-shuffle"/></svg><span class="mix-label">Mix up</span><span class="knob"></span></button></header>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <!-- 6. the questions. Momo's small heart pulses while she talks (tap: she starts over); then it turns into Replay. -->
+  <section id="quiz" class="screen" aria-label="Question">
+    <header class="bar">
+      <button class="round back" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+      <span class="kid" id="kidName" hidden><svg><use href="#i-user"/></svg><span></span></span>
+      <div class="dots" id="dots"></div>
+      <button class="momo-btn" id="hearAgain" aria-label="Momo is talking. Tap to hear it from the start"><canvas id="heart" aria-hidden="true"></canvas><svg class="again"><use href="#i-replay"/></svg></button>
+      <button class="next-btn" id="nextBtn" aria-label="Next"><span>Next</span><svg><use href="#i-next"/></svg></button>
+    </header>
+    <div class="stage" id="stage">
+      <div class="pic-box"><img id="qPic" alt=""><div class="burst" id="burst"></div></div>
+      <div class="answers" id="answers"></div>
+    </div>
+  </section>
+
+  <!-- 7. the end of a round -->
+  <section id="done" class="screen" aria-label="All done">
+    <div class="done-in">
+      <div class="done-hero card"><img id="doneHero" alt=""></div>
+      <div class="done-text">
+        <h1 class="done-title" id="doneTitle">You did it!</h1>
+        <div class="stars" id="stars"></div>
+        <p class="done-score" id="doneScore"></p>
+        <div class="done-btns">
+          <button class="pill gold" id="againBtn"><svg><use href="#i-replay"/></svg><span>Play again</span></button>
+          <button class="pill violet" id="moreBtn"><svg><use href="#i-star"/></svg><span>Pick more</span></button>
+          <button class="pill berry" id="homeBtn"><svg><use href="#i-home"/></svg><span>Home</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="confetti" id="confetti"></div>
+  </section>
+
+  <!-- 8. credits -->
+  <section id="credits" class="screen" aria-label="Credits">
+    <header class="bar"><button class="round back" aria-label="Back"><svg><use href="#i-back"/></svg></button><h1 class="bar-title">Credits</h1><span class="bar-gap"></span></header>
+    <div class="credits-body">
+      <img class="credits-badge" src="img/badge.webp" alt="The Momma Lewis Momo Learning Is FUN">
+      <p class="credits-ages">A learning game for ages 2&ndash;7</p>
+      <dl class="credits-list">
+        <dt>Built by</dt><dd>Claude Code Opus 5.5</dd>
+        <dt>Content created by</dt><dd>Gemini Plus Flash 3.6, Canva Pro, Grok Premium Expert 4.7, ChatGPT-6, and ElevenLabs Multilingual v2</dd>
+        <dt id="standinT" hidden>Stand-in voice</dt><dd id="standinD" hidden></dd>
+        <dt>Font</dt><dd>Fredoka (SIL Open Font License 1.1)</dd>
+      </dl>
+      <p class="credits-small">No ads, no accounts, no tracking. Your name stays on this screen only and is never saved or sent anywhere.</p>
+      <p class="credits-small" id="verLine"></p>
+    </div>
+  </section>
+
+  <!-- the character's video after an answer -->
+  <div id="vidLayer" class="layer" aria-hidden="true">
+    <video id="fbVideo" playsinline preload="auto"></video>
+    <button class="skip" id="skipBtn" aria-label="Skip"><span>Skip</span><svg><use href="#i-next"/></svg></button>
+  </div>
+  <div id="toast" role="status"></div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/voice-env.js"></script>
+<script src="js/momo-light.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
