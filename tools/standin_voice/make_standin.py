@@ -3,17 +3,19 @@ Reads the owner's recording scripts ("Momo:", "Correct Feedback:", "Wrong Feedba
 and writes, into each source/"<prefix> N"/ folder: "<prefix> Na.mp3" (question), "…b.mp3" (right), "…c.mp3" (wrong)
 and standin.txt (which voice; delete the clips + standin.txt when Momo's clips arrive).
 Run it with the engine's own Python:
-  Kokoro:  ~/.local/share/momo-tts/.venv/bin/python -I tools/standin_voice/make_standin.py kokoro am_xxx [--only "english 16"]
+  Kokoro:  ~/.local/share/momo-tts/.venv/bin/python -I tools/standin_voice/make_standin.py kokoro am_xxx [--only "english 16"] [--redo]
   XTTS:    ~/YipYappersPro/app/.venv/bin/python -I tools/standin_voice/make_standin.py xtts "Speaker Name"
 Clips are matched to Momo's loudness (about -21 LUFS), 44.1 kHz mono MP3 like hers. It refuses to replace clips that
-are not its own (a folder without standin.txt that already has a/b/c clips)."""
+are not its own (a folder without standin.txt that already has a/b/c clips). A folder it has already voiced (standin.txt +
+all 3 clips) is skipped unless --redo is given (since 2026-11-12: only the new questions get voiced)."""
 import glob, os, re, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, 'source')
 FF = os.environ.get('FFMPEG') or glob.glob(os.path.join(ROOT, '.venv/lib/python*/site-packages/imageio_ffmpeg/binaries/ffmpeg*'))[0]
 TARGETS = [('english', 'english 5 year old.txt', list(range(16, 40))),
-           ('science', 'science 5 year old.txt', list(range(16, 27)) + [38, 39, 40, 45, 46, 47, 48, 49, 50])]
+           ('math', 'math 5 year old.txt', list(range(16, 23))),
+           ('science', 'science 5 year old.txt', list(range(16, 36)) + list(range(38, 51)))]
 # how the phonics marks are said (a voice engine reads "/d/" as "slash d slash")
 SOUNDS = {'ig': 'ig', 'ed': 'ed', 'ing': 'ing', 'oat': 'oat', 'd': 'duh', 'o': 'ah', 'g': 'guh', 's': 'sss', 'u': 'uh',
           'n': 'nnn', 'ks': 'ks', 'b': 'buh', 'm': 'mmm', 'r': 'rrr', 'kahh': 'kah', 'sss': 'sss', 'mmm': 'mmm'}
@@ -24,6 +26,8 @@ def speakable(t):
     t = re.sub(r'\b([A-Z])-([A-Z])(?:-([A-Z]))?(?:-([A-Z]))?\b', lambda m: ', '.join(x for x in m.groups() if x) + ',', t)   # D-O-G → D, O, G,
     # a choice that is one small letter ("Option A: a") is said as the letter's name, not the word "a"
     t = re.sub(r'(Option [ABC]:\s*)([a-z])(?=\s*[,?])', lambda m: m.group(1) + m.group(2).upper(), t)
+    # "1 + 1 = 2" is said as words (the engine drops the + and = signs)
+    t = re.sub(r'(\d+)\s*\+\s*(\d+)\s*=\s*(\d+)', r'\1 plus \2 equals \3', t)
     t = t.replace('...', ',').replace('…', ',')
     return re.sub(r'\s+', ' ', t).strip()
 
@@ -67,6 +71,7 @@ def main():
         sys.exit(__doc__)
     kind, voice = a[0], a[1]
     only = a[a.index('--only') + 1] if '--only' in a else None
+    redo = '--redo' in a
     import soundfile as sf
     say = engine(kind, voice)
     label = ('Kokoro-82M (Apache-2.0), voice %s' % voice) if kind == 'kokoro' else ('XTTS-v2 (Coqui Public Model License), voice %s' % voice)
@@ -83,6 +88,8 @@ def main():
             have = [f for f in glob.glob(os.path.join(folder, '*.mp3'))]
             if have and not mine:
                 print('skip', name, '(has real clips)'); continue
+            if mine and len(have) == 3 and not redo:
+                print('skip', name, '(already voiced; --redo to make it again)'); continue
             for f in have:
                 os.remove(f)
             for letter, text in zip('abc', lines(script, n)):

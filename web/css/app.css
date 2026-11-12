@@ -97,7 +97,6 @@ svg { width: 1em; height: 1em; flex: none; }
   box-shadow: 0 0 0 4px var(--gold), 0 8px 20px rgba(0,0,0,.4); font-size: clamp(26px, 7vmin, 58px); transition: opacity .25s;
 }
 .intro.playing .vid-btn { opacity: 0; pointer-events: none; }
-.intro.playing { cursor: pointer; }
 .friend { flex: none; transition: transform .15s; }
 .friend:active { transform: scale(.95); }
 .friends.invite .friend { animation: wiggle 3.2s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .4s); }

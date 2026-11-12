@@ -6,6 +6,7 @@ Usage: python3 tests/harness.py [--sizes all|phone] [--media] [--web DIR]
 Inside the Claude sandbox set WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1."""
 import json
 import os
+import re
 import sys
 import time
 
@@ -25,6 +26,42 @@ if '--sizes' in args and args[args.index('--sizes') + 1] == 'phone':
     SIZES = [(412, 915)]
 
 results = []
+
+
+def ring_layout():
+    """v1.2: the 8 characters and the heart as the intro video draws them (tools/intro/intro.html + tools/make_intro.py),
+    read from those files so the tap checks follow the video, not the app's copy of the numbers."""
+    h = open(os.path.join(ROOT, 'tools', 'intro', 'intro.html'), encoding='utf-8').read()
+    mi = open(os.path.join(ROOT, 'tools', 'make_intro.py'), encoding='utf-8').read()
+    W, H = map(int, re.search(r'<canvas id="c" width="(\d+)" height="(\d+)"', h).groups())
+    m = re.search(r"'pops': \[LEAD \+ ([\d.]+) \+ i \* ([\d.]+) for i in range\(8\)\]", mi)
+    return {'w': W, 'h': H, 'rx': float(re.search(r'Math\.cos\(a\) \* (\d+)', h).group(1)),
+            'ry': float(re.search(r'Math\.sin\(a\) \* (\d+)', h).group(1)), 'card': int(re.search(r'var S = (\d+)', h).group(1)),
+            'heartR0': int(re.search(r'R0: (\d+)', h).group(1)),
+            'lead': float(re.search(r'FPS, LEAD, TAIL = \d+, ([\d.]+),', mi).group(1)), 'first': float(m.group(1)), 'step': float(m.group(2))}
+
+
+RING = ring_layout()
+# ringXY(i): where character i sits on the screen (i = -1: the heart); skyXY(k): spots on the video that are neither
+RING_JS = """const L = %s;
+  const vr = () => document.getElementById('intro').getBoundingClientRect();
+  const toScreen = (x, y) => { const r = vr(), s = Math.max(r.width / L.w, r.height / L.h); return [r.left + (r.width - L.w * s) / 2 + x * s, r.top + (r.height - L.h * s) / 2 + y * s]; };
+  const ringXY = (i) => { if (i < 0) return toScreen(L.w / 2, L.h / 2); const a = -Math.PI / 2 + i * Math.PI / 4; return toScreen(L.w / 2 + Math.cos(a) * L.rx, L.h / 2 + Math.sin(a) * L.ry); };
+  const skyXY = (k) => toScreen(...[[L.w * 0.1, L.h * 0.92], [L.w * 0.68, L.h / 2], [L.w * 0.9, L.h * 0.08]][k]);
+  const tapAt = (xy) => { const el = document.elementFromPoint(xy[0], xy[1]);
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: xy[0], clientY: xy[1], detail: 1 })); return el.id; };
+""" % json.dumps(RING)
+
+
+def intro_layout_check():
+    app = open(os.path.join(WEB, 'js', 'app.js'), encoding='utf-8').read()
+    m = re.search(r'var RING = \{ w: (\d+), h: (\d+), rx: (\d+), ry: (\d+), half: (\d+), heart: (\d+), pops: \[\] \};\s*'
+                  r'for \(var ri = 0; ri < 8; ri\+\+\) RING\.pops\.push\(([\d.]+) \+ ([\d.]+) \+ ri \* ([\d.]+) \+ ([\d.]+)\);', app)
+    got = m and [int(m.group(k)) for k in range(1, 7)] + [float(m.group(k)) for k in range(7, 11)]
+    ok('intro taps: the app\'s ring follows the video (frame, ellipse, card size, heart, pop times)',
+       got and got[:4] == [RING['w'], RING['h'], RING['rx'], RING['ry']] and RING['card'] / 2 + 7 <= got[4] <= RING['card'] / 2 + 25
+       and RING['heartR0'] < got[5] < RING['ry'] - got[4] and got[6:9] == [RING['lead'], RING['first'], RING['step']] and 0 < got[9] <= 0.3,
+       {'app': got, 'video': RING})
 
 
 def ok(name, cond, info=''):
@@ -174,8 +211,8 @@ class Page:
 
 
 # what the content holds now (update when questions are added: tools/build_content.py prints the counts)
-EXPECT = {'easy': 8, 'hard': {'words': 50, 'math': 25, 'science': 37}}
-STANDIN = 44          # questions with the stand-in voice (credits line)
+EXPECT = {'easy': 8, 'hard': {'words': 50, 'math': 32, 'science': 50}}
+STANDIN = 64          # questions with the stand-in voice (credits line)
 HARD_ALL = sum(EXPECT['hard'].values())
 
 SCREEN_PARTS = {
@@ -207,6 +244,17 @@ def flow(w, h):
         ok(tag + ' home: the 8 characters, pictures only (no names)', hm['n'] == 8 and hm['text'] == '' and hm['alts'] and hm['square'] and hm['ids'] == ['dove', 'elephant', 'dog', 'sphinx', 'cane', 'ivy', 'duck', 'lion'], hm)
         ok(tag + ' home: "For ages 2-7" and Credits', hm['ages'] == 'For ages 2–7' and hm['credits'], hm['ages'])
         ok(tag + ' home: the intro and the characters are big', hm['intro'] > 0.08 and hm['pic'] > 0.012, 'intro %.0f%%, each character %.1f%% of the window' % (100 * hm['intro'], 100 * hm['pic']))
+        # v1.2: the intro's ring (the poster shows all 8 before it plays): a tap on a character picks it, the heart is the heart
+        it = p.js(RING_JS + """
+          const hits = [...Array(8)].map((_, i) => MOMO.introSpot(...ringXY(i))), heart = MOMO.introSpot(...ringXY(-1));
+          const sky = [0, 1, 2].map((k) => MOMO.introSpot(...skyXY(k)));
+          const el = tapAt(ringXY(3)); await T.wait(() => MOMO.state.screen === 'mode', 3000, 'levels after the ring tap');
+          const ch = MOMO.state.char.id; MOMO.back(); await T.wait(() => MOMO.state.screen === 'home'); await T.sleep(250);
+          const skyEl = tapAt(skyXY(1)); await T.sleep(250);
+          return { hits, heart, sky, el, ch, after: MOMO.state.screen, skyEl };""")
+        ok(tag + ' intro: a tap on each of the 8 in the ring picks it (sphinx → levels), the middle is the heart, the sky does nothing',
+           it['hits'] == list(range(8)) and it['heart'] == 'heart' and it['sky'] == [None, None, None] and it['el'] == 'intro'
+           and it['ch'] == 'sphinx' and it['after'] == 'home' and it['skyEl'] == 'intro', it)
         p.shot('1-home')
         # the dove → the 4 levels with their bars
         p.js("T.click('.friend[data-char=dove]'); await T.wait(() => MOMO.state.screen === 'mode'); await T.sleep(300); return true;")
@@ -394,8 +442,8 @@ def flow(w, h):
         c = p.js("""T.click('#creditsBtn'); await T.wait(() => MOMO.state.screen === 'credits'); await T.sleep(250);
           const t = document.querySelector('.credits-body').textContent.replace(/\\s+/g, ' ');
           return [t, T.fit(['#credits .back', '.credits-badge']), MOMO.back(), MOMO.state.screen];""")
-        ok(tag + ' Credits: ages 2-7, Claude Code Opus 5.5, the content makers; back → home',
-           'ages 2–7' in c[0] and 'Claude Code Opus 5.5' in c[0] and 'Gemini Plus Flash 3.6, Canva Pro, Grok Premium Expert 4.7, ChatGPT-6, and ElevenLabs Multilingual v2' in c[0]
+        ok(tag + ' Credits: ages 2-7, created by Rich BlackMan, built by Claude Code Opus 5.5, content generated by …; back → home',
+           'ages 2–7' in c[0] and 'CreatedbyRichBlackManBuiltbyClaudeCodeOpus5.5ContentgeneratedbyGemini' in re.sub(r'\s', '', c[0]) and 'Gemini Plus Flash 3.6, Canva Pro, Grok Premium Expert 4.7, ChatGPT-6, and ElevenLabs Multilingual v2' in c[0]
            and not c[1] and c[2:] == [True, 'home'] and (not STANDIN or 'Kokoro-82M (voice am_michael, Apache-2.0) reads some of the newest questions' in c[0]), c[1:])
         p.js("T.click('#creditsBtn'); await T.sleep(300); return true;")
         p.shot('9-credits')
@@ -441,6 +489,23 @@ def _media_check():
         t = p.js("const v = document.getElementById('intro'); await T.sleep(2500); return [v.paused, v.currentTime, v.videoWidth, v.muted, v.duration];")
         ok('intro video (heart + 8 characters) plays by itself with sound', t[0] is False and t[1] > 1.0 and t[2] == 1280 and t[3] is False and 20 < t[4] < 24, t)
         p.shot('9-intro-playing')
+        # v1.2: the heart starts the intro over; a character can be picked only once it has popped into the ring
+        t = p.js(RING_JS + """
+          const v = document.getElementById('intro'), out = {};
+          await T.wait(() => v.currentTime > 2.0, 8000, 'intro at 2 s'); const before = v.currentTime;
+          out.heartEl = tapAt(ringXY(-1)); await T.sleep(400); out.heart = [Math.round(before * 10) / 10, Math.round(v.currentTime * 10) / 10, v.paused];
+          v.pause(); v.currentTime = L.lead + L.first - 0.5; await T.sleep(300);
+          out.early = [tapAt(ringXY(0)), (await T.sleep(300), MOMO.state.screen)];
+          v.currentTime = L.lead + L.first + 0.5; await T.sleep(300);
+          out.next = [tapAt(ringXY(1)), (await T.sleep(300), MOMO.state.screen)];      // the elephant pops 1.75 s later
+          out.shown = [0, 1, 7].map((i) => MOMO.ringShown(i));
+          tapAt(ringXY(0)); await T.wait(() => MOMO.state.screen === 'mode', 3000, 'levels after the dove');
+          out.picked = [MOMO.state.char.id, v.paused];
+          MOMO.back(); await T.wait(() => MOMO.state.screen === 'home'); await T.sleep(300);
+          return out;""", 30)
+        ok('intro: a tap on the heart while it plays starts it over', t['heart'][0] > 1.8 and t['heart'][1] < 1.0 and t['heart'][2] is False, t['heart'])
+        ok('intro: a character that has not popped in yet cannot be picked; one that has can (and the intro stops)',
+           t['early'][1] == 'home' and t['next'][1] == 'home' and t['shown'] == [True, False, False] and t['picked'] == ['dove', True], t)
         t = p.js("""
           T.click('.friend[data-char=duck]'); await T.sleep(200); T.click('.mode-btn.hard'); await T.sleep(200); T.click('#nameSkip'); await T.sleep(200); T.click('.tile[data-set=math]');
           await T.wait(() => MOMO.phase() === 'asking'); const intro = document.getElementById('intro').paused;
@@ -505,6 +570,7 @@ def _media_check():
 
 
 if __name__ == '__main__':
+    intro_layout_check()
     splash_check()
     for w, h in SIZES:
         flow(w, h)

@@ -83,6 +83,11 @@ const FIT = `(sels) => { const W = innerWidth, H = innerHeight, out = [];
   if (document.documentElement.scrollWidth > W + 1 || document.documentElement.scrollHeight > H + 1) out.push('page scrolls');
   return out; }`;
 const fit = (sels) => js(`(${FIT})(${JSON.stringify(sels)})`);
+// v1.2: where the intro video draws character i in its ring (i = -1: Momo's heart), from tools/intro/intro.html
+// (a 1920x1080 frame, 8 cards on an ellipse 690 x 372 around the middle, clockwise from the top)
+const RINGXY = (i) => `(() => { const r = document.getElementById('intro').getBoundingClientRect(), s = Math.max(r.width / 1920, r.height / 1080);
+  const a = -Math.PI / 2 + ${i} * Math.PI / 4, x = ${i} < 0 ? 960 : 960 + Math.cos(a) * 690, y = ${i} < 0 ? 540 : 540 + Math.sin(a) * 372;
+  return [r.left + (r.width - 1920 * s) / 2 + x * s, r.top + (r.height - 1080 * s) / 2 + y * s]; })()`;
 const media = (id) => js(`(() => { const v = document.getElementById('${id}'); return { src: (v.currentSrc || '').split('/').pop(), t: v.currentTime, paused: v.paused, w: v.videoWidth, ready: v.readyState, err: v.error && v.error.code }; })()`);
 const playing = () => js(`(() => { const p = MOMO.playing(); return p && { src: p.src.split('/').slice(-2).join('/'), t: p.time, paused: p.paused }; })()`);
 const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activities'); const m = d.match(/(?:topResumedActivity|mResumedActivity|ResumedActivity)[^\n]*\{[^}]*\s(\S+\/\S+)/); return m ? m[1] : ''; };
@@ -103,7 +108,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     await until(`typeof MOMO !== 'undefined'`, 15000, 'the app loaded');
     const sp = await js(`[MOMO.state.screen, (() => { const r = document.querySelector('.splash-badge').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), innerWidth, innerHeight]; })(), MOMO.version,
       document.getElementById('splash').textContent.trim()]`);
-    ok('splash: the logo big on purple, no "made by" line', (sp[0] === 'splash' || sp[0] === 'home') && sp[3] === '' && sp[2] === '1.1.0', sp);
+    ok('splash: the logo big on purple, no "made by" line', (sp[0] === 'splash' || sp[0] === 'home') && sp[3] === '' && sp[2] === '1.2.0', sp);
     await until(`MOMO.state.screen === 'home'`, 15000, 'home');
     ok('home after the splash', true, ((Date.now() - t0) / 1000).toFixed(1) + ' s from launch');
     await sleep(3000);
@@ -118,6 +123,21 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     ok('home fits (landscape)', (await fit(HOME)).length === 0, await fit(HOME));
     v = await media('intro');
     ok('rotating keeps the intro playing (no restart)', !v.paused && v.t > 3, v);
+    // v1.2: a real tap on Momo's heart starts the intro over; then the dog (pops in at 6.75 s) can't be picked yet,
+    // the dove (3.25 s) can
+    await tapXY(RINGXY(-1)); await sleep(700);
+    const vh = await media('intro');
+    ok('a real tap on the heart starts the intro over', !vh.paused && vh.t < 1.6 && v.t > 3, [v.t, vh.t]);
+    await tapXY(RINGXY(2)); await sleep(800);
+    const early = [await js('MOMO.state.screen'), (await media('intro')).t];
+    ok('a tap on a character that has not popped in yet does nothing', early[0] === 'home' && early[1] < 6.5, early);
+    await until(`document.getElementById('intro').currentTime > 3.8`, 8000, 'the dove popped in');
+    await tapXY(RINGXY(0));
+    await until(`MOMO.state.screen === 'mode'`, 5000, 'levels after tapping the dove in the intro');
+    v = await media('intro');
+    ok('a real tap on the dove in the intro picks it (and the intro stops)', (await js('MOMO.state.char.id')) === 'dove' && v.paused, v);
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(900);
+    ok('Back → home', (await js('MOMO.state.screen')) === 'home');
     await tap('.friend[data-char=dove]');
     await until(`MOMO.state.screen === 'mode'`, 5000, 'levels after tapping the dove');
     ok('a real tap on the dove opens the levels', true);
@@ -255,7 +275,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     const l2 = await js('MOMO.state.screen');
     ok('Back: Easy question → levels (video stops) → home', l1[0] === 'mode' && l1[1] === null && l2 === 'home', [l1, l2]);
     await tap('#creditsBtn'); await sleep(800);
-    const cr = await js(`[MOMO.state.screen, document.querySelector('.credits-body').textContent.includes('Claude Code Opus 5.5')]`);
+    const cr = await js(`[MOMO.state.screen, document.querySelector('.credits-body').textContent.replace(/\\s/g, '').includes('CreatedbyRichBlackManBuiltbyClaudeCodeOpus5.5ContentgeneratedbyGemini')]`);
     shot('11-credits');
     ok('Credits opens from home', cr[0] === 'credits' && cr[1], cr);
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(700);
@@ -266,7 +286,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     adb('shell', 'am', 'start', '-n', PKG + '/.MainActivity');
     await sleep(2000); await connect();
     await until(`window.MOMO && MOMO.state.screen === 'home'`, 15000, 'home again');
-    ok('Mix up is still on after the app is closed and opened', (await js('MOMO.settings.mix')) === true && (await js('MOMO.version')) === '1.1.0');
+    ok('Mix up is still on after the app is closed and opened', (await js('MOMO.settings.mix')) === true && (await js('MOMO.version')) === '1.2.0');
     const label = adb('shell', 'cmd', 'package', 'resolve-activity', '--brief', '-c', 'android.intent.category.LAUNCHER', PKG).trim().split('\n').pop();
     ok('launcher entry', /com\.wgra\.momolearning\/\.MainActivity/.test(label), label);
   } catch (e) {

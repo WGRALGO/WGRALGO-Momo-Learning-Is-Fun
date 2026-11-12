@@ -14,7 +14,7 @@ import re
 import sys
 
 APP_ID = 'com.wgra.momolearning'
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 NAME = 'The Momma Lewis Momo Learning Is FUN'
 WEB_DIR = os.environ.get('MOMO_WEB_DIR', '/usr/share/momo-learning/web')
 PURPLE = '#542282'

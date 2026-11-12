@@ -8,7 +8,7 @@
 // Questions come from js/content.js (built by tools/build_content.py). Works the same on Android (WebView), Linux and the web.
 (function () {
   'use strict';
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
   var C = window.MOMO_CONTENT || { levels: [], characters: [] };
   var $ = function (id) { return document.getElementById(id); };
   var TEST = { fast: false };              // tests: media "plays" for a moment instead of its full length
@@ -157,24 +157,61 @@
     });
   }
 
-  // ───────────── home: Momo's intro (plays by itself once per launch, tap to pause / play again)
-  var introAuto = false;
+  // ───────────── home: Momo's intro (plays by itself once per launch).
+  // v1.2.0 (owner, 2026-11-11/12): a tap on one of the 8 characters in the ring picks it, once it has popped in (the
+  // poster shows all 8, so before the intro starts they all count); a tap on Momo's heart starts the intro over, while it
+  // plays or after; a tap anywhere else does nothing. The ring is drawn INTO the video by tools/intro/intro.html, so RING
+  // copies its layout: a 1920x1080 frame, 8 cards (250 px + gold frame) on an ellipse 690 x 372 around the heart,
+  // clockwise from the top in content_map order, popping in at 0.5 + 2.6 + 1.75 i s (tools/make_intro.py LEAD + pops).
+  var RING = { w: 1920, h: 1080, rx: 690, ry: 372, half: 140, heart: 215, pops: [] };
+  for (var ri = 0; ri < 8; ri++) RING.pops.push(0.5 + 2.6 + ri * 1.75 + 0.15);
+  var introAuto = false, introStarted = false;
   function setIntroBtn(kind) { $('introBtn').innerHTML = icon(kind); }
-  function playIntro(auto) {
+  function playIntro(auto, fromStart) {
     var v = $('intro');
     if (auto) { if (introAuto) return; introAuto = true; }
     if (TEST.fast && auto) return;
-    if (v.ended) { try { v.currentTime = 0; } catch (e) { /* ignore */ } }
+    if (v.ended || fromStart) { try { v.currentTime = 0; } catch (e) { /* ignore */ } }
     var p = v.play();
-    if (p && p.catch) p.catch(function () { $('introCard').classList.remove('playing'); setIntroBtn('play'); });
+    if (p && p.catch) p.catch(function () { $('introCard').classList.remove('playing'); setIntroBtn(introStarted ? 'replay' : 'play'); });
   }
   function pauseIntro() { var v = $('intro'); if (!v.paused) v.pause(); }
+  // where a tap on the intro lands: 'heart', a character's index (0-7), or null (the sky)
+  function introSpot(clientX, clientY) {
+    var r = $('intro').getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    var s = Math.max(r.width / RING.w, r.height / RING.h);          // the video is object-fit: cover
+    var x = (clientX - r.left - (r.width - RING.w * s) / 2) / s, y = (clientY - r.top - (r.height - RING.h * s) / 2) / s;
+    var cx = RING.w / 2, cy = RING.h / 2;
+    if (Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) <= RING.heart) return 'heart';
+    var best = null, bd = 1e9;
+    for (var i = 0; i < 8; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 4, sx = cx + Math.cos(a) * RING.rx, sy = cy + Math.sin(a) * RING.ry;
+      if (Math.abs(x - sx) <= RING.half && Math.abs(y - sy) <= RING.half) {
+        var d = (x - sx) * (x - sx) + (y - sy) * (y - sy); if (d < bd) { bd = d; best = i; }
+      }
+    }
+    return best;
+  }
+  function ringShown(i) { var v = $('intro'); return !introStarted || v.ended || v.currentTime >= RING.pops[i]; }
+  function introTap(e) {
+    // the round button over the heart (play/replay) and a keyboard press count as the heart
+    var hit = (e.detail === 0 || (e.target.closest && e.target.closest('#introBtn'))) ? 'heart' : introSpot(e.clientX, e.clientY);
+    if (hit === 'heart') { playIntro(false, true); return 'heart'; }
+    if (hit !== null && ringShown(hit)) { pickChar(C.characters[hit].id); return C.characters[hit].id; }
+    return null;
+  }
   (function () {
     var v = $('intro'), card = $('introCard');
-    v.addEventListener('play', function () { card.classList.add('playing'); $('friends').classList.remove('invite'); });
-    v.addEventListener('pause', function () { card.classList.remove('playing'); setIntroBtn(v.ended ? 'replay' : 'play'); });
+    v.addEventListener('play', function () { introStarted = true; card.classList.add('playing'); $('friends').classList.remove('invite'); });
+    v.addEventListener('pause', function () { card.classList.remove('playing'); setIntroBtn(introStarted ? 'replay' : 'play'); });
     v.addEventListener('ended', function () { card.classList.remove('playing'); setIntroBtn('replay'); $('friends').classList.add('invite'); });
-    card.addEventListener('click', function () { if (v.paused) playIntro(false); else v.pause(); });
+    card.addEventListener('click', introTap);
+    // the pointer turns into a hand only over the heart and the characters already showing
+    card.addEventListener('mousemove', function (e) {
+      var hit = introSpot(e.clientX, e.clientY);
+      card.style.cursor = (hit === 'heart' || (hit !== null && ringShown(hit))) ? 'pointer' : '';
+    });
     // the 8 characters, pictures only (no names: owner, 2026-11-10)
     var fr = $('friends');
     C.characters.forEach(function (ch, i) {
@@ -707,7 +744,7 @@
 
   // ───────────── for the tests (tests/ and the Android checks drive the app through this)
   window.MOMO = {
-    version: VERSION, content: C, state: state, test: TEST, layout: layout, back: back, settings: settings, setMix: setMix, replay: replay, spotAt: spotAt, heart: function () { return heart; }, envFor: envFor,
+    version: VERSION, content: C, state: state, test: TEST, layout: layout, back: back, settings: settings, setMix: setMix, replay: replay, spotAt: spotAt, introSpot: introSpot, ringShown: ringShown, heart: function () { return heart; }, envFor: envFor,
     phase: function () { return state.round ? state.round.phase : null; },
     question: function () { var r = state.round; return r && r.queue[r.pos] ? r.queue[r.pos].q : null; },
     playing: function () { return current ? { src: current.src, time: current.media.currentTime, paused: current.media.paused } : null; }

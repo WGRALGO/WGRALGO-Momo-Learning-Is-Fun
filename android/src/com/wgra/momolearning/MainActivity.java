@@ -39,7 +39,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
     static final String HOST = "momo.app";
     static final String START = "https://" + HOST + "/index.html";
-    static final String VERSION = "1.1.0";
+    static final String VERSION = "1.2.0";
     static final int PURPLE = 0xFF542282;
     WebView web;
     /** Until the page has drawn its splash, nothing is drawn, so the launch screen (logo on purple) stays up. */
