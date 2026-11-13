@@ -108,7 +108,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     await until(`typeof MOMO !== 'undefined'`, 15000, 'the app loaded');
     const sp = await js(`[MOMO.state.screen, (() => { const r = document.querySelector('.splash-badge').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), innerWidth, innerHeight]; })(), MOMO.version,
       document.getElementById('splash').textContent.trim()]`);
-    ok('splash: the logo big on purple, no "made by" line', (sp[0] === 'splash' || sp[0] === 'home') && sp[3] === '' && sp[2] === '1.2.0', sp);
+    ok('splash: the logo big on purple, no "made by" line', (sp[0] === 'splash' || sp[0] === 'home') && sp[3] === '' && sp[2] === '1.3.0', sp);
     await until(`MOMO.state.screen === 'home'`, 15000, 'home');
     ok('home after the splash', true, ((Date.now() - t0) / 1000).toFixed(1) + ' s from launch');
     await sleep(3000);
@@ -275,7 +275,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     const l2 = await js('MOMO.state.screen');
     ok('Back: Easy question → levels (video stops) → home', l1[0] === 'mode' && l1[1] === null && l2 === 'home', [l1, l2]);
     await tap('#creditsBtn'); await sleep(800);
-    const cr = await js(`[MOMO.state.screen, document.querySelector('.credits-body').textContent.replace(/\\s/g, '').includes('CreatedbyRichBlackManBuiltbyClaudeCodeOpus5.5ContentgeneratedbyGemini')]`);
+    const cr = await js(`[MOMO.state.screen, document.querySelector('.credits-body').textContent.replace(/\\s/g, '').includes('CreatedbyRichBlackManBuiltbyClaudeCodeOpus5.5andFable5.2ContentgeneratedbyGemini')]`);
     shot('11-credits');
     ok('Credits opens from home', cr[0] === 'credits' && cr[1], cr);
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(700);
@@ -286,7 +286,7 @@ const topActivity = () => { const d = adb('shell', 'dumpsys', 'activity', 'activ
     adb('shell', 'am', 'start', '-n', PKG + '/.MainActivity');
     await sleep(2000); await connect();
     await until(`window.MOMO && MOMO.state.screen === 'home'`, 15000, 'home again');
-    ok('Mix up is still on after the app is closed and opened', (await js('MOMO.settings.mix')) === true && (await js('MOMO.version')) === '1.2.0');
+    ok('Mix up is still on after the app is closed and opened', (await js('MOMO.settings.mix')) === true && (await js('MOMO.version')) === '1.3.0');
     const label = adb('shell', 'cmd', 'package', 'resolve-activity', '--brief', '-c', 'android.intent.category.LAUNCHER', PKG).trim().split('\n').pop();
     ok('launcher entry', /com\.wgra\.momolearning\/\.MainActivity/.test(label), label);
   } catch (e) {
